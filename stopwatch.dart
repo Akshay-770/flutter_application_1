@@ -9,8 +9,12 @@ class Stopwatch extends StatefulWidget {
 }
 
 class _StopwatchState extends State<Stopwatch> {
-  int seconds = 0;
+  double seconds = 0;
   late Timer timer;
+  bool isTicking = false;
+  int millis = 0;
+  final laps = <int>[];
+
   String _secondsTotext() => seconds <= 1 ? "Second" : "Seconds";
   @override
   Widget build(BuildContext context) {
@@ -23,54 +27,56 @@ class _StopwatchState extends State<Stopwatch> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            "$seconds ${_secondsTotext()}",
-            style: Theme.of(context).textTheme.headlineSmall,
+          Expanded(
+            child: Text(
+              "$seconds ${_secondsTotext()}",
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
           ),
           const SizedBox(
             height: 10,
           ),
-          controlpanel(),
-          controlpanel1(),
+          Expanded(child: controlpanel()),
+          Expanded(child: builderDisplay()),
         ],
       )),
     );
   }
 
   Row controlpanel() {
-    return const Row(
+    return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         ElevatedButton(
-          onPressed: null,
-          style: ButtonStyle(
+          onPressed: isTicking ? null : _startTimer,
+          style: const ButtonStyle(
             backgroundColor: MaterialStatePropertyAll<Color>(Colors.green),
             foregroundColor: MaterialStatePropertyAll<Color>(Colors.white),
           ),
-          child: Text("Start"),
+          child: const Icon(Icons.start),
         ),
-        SizedBox(
+        const SizedBox(
           width: 10,
         ),
         ElevatedButton(
-          onPressed: null,
-          style: ButtonStyle(
+          onPressed: isTicking ? _stopTimer : null,
+          style: const ButtonStyle(
             backgroundColor: MaterialStatePropertyAll<Color>(Colors.red),
             foregroundColor: MaterialStatePropertyAll<Color>(Colors.white),
           ),
-          child: Text("Stop"),
+          child: const Icon(Icons.stop),
         ),
-        SizedBox(
+        const SizedBox(
           width: 10,
         ),
         ElevatedButton(
-          onPressed: null,
-          style: ButtonStyle(
+          onPressed: _ontapLap,
+          style: const ButtonStyle(
             backgroundColor: MaterialStatePropertyAll<Color>(Colors.blue),
             foregroundColor: MaterialStatePropertyAll<Color>(Colors.white),
           ),
-          child: Text("Lap"),
+          child: const Icon(Icons.timer),
         ),
       ],
     );
@@ -87,7 +93,7 @@ class _StopwatchState extends State<Stopwatch> {
             backgroundColor: MaterialStatePropertyAll<Color>(Colors.amber),
             foregroundColor: MaterialStatePropertyAll<Color>(Colors.white),
           ),
-          child: Text("Pause"),
+          child: Icon(Icons.pause),
         ),
         SizedBox(
           width: 10,
@@ -98,7 +104,7 @@ class _StopwatchState extends State<Stopwatch> {
             backgroundColor: MaterialStatePropertyAll<Color>(Colors.pink),
             foregroundColor: MaterialStatePropertyAll<Color>(Colors.white),
           ),
-          child: Text("Clear"),
+          child: Icon(Icons.clear_outlined),
         ),
       ],
     );
@@ -107,16 +113,67 @@ class _StopwatchState extends State<Stopwatch> {
   @override
   void initState() {
     super.initState();
+  }
+
+  void _startTimer() {
     timer = Timer.periodic(
         const Duration(
-          seconds: 1,
+          milliseconds: 100,
         ),
         _onTick);
+    setState(() {
+      isTicking = true;
+      seconds = 0;
+    });
+  }
+
+  void _stopTimer() {
+    timer.cancel();
+    setState(() {
+      isTicking = false;
+    });
+  }
+
+  void _ontapLap() {
+    setState(() {
+      laps.add(millis);
+      millis = 0;
+      seconds = 0;
+    });
+    print(laps);
+  }
+
+  Widget buildDisplay() {
+    return ListView(
+      children: [
+        for (int i in laps)
+          ListTile(
+            leading: const Icon(Icons.star),
+            title: Text("Lap  : ${i / 1000} seconds"),
+            trailing: const Icon(Icons.delete),
+          )
+      ],
+    );
+  }
+
+  Widget builderDisplay() {
+    return ListView.builder(
+      itemCount: laps.length,
+      itemBuilder: (context, index) {
+        final milis = laps[index];
+        return ListTile(
+          leading: const Icon(Icons.star),
+          title: Text("Lap  : ${milis / 1000} seconds"),
+          trailing: const Icon(Icons.cancel),
+        );
+      },
+    );
   }
 
   void _onTick(Timer timer) {
     setState(() {
-      seconds++;
+      millis += 100;
+      seconds = millis / 1000;
     });
   }
 
